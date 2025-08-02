@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+// Define types for our health check response
+type GeminiTestResult = 
+  | { status: 'not_tested' }
+  | { status: 'success'; responseText: string }
+  | { status: 'error'; errorMessage: string; errorCode: string };
+
 export async function GET() {
   try {
     // Get the actual API key value to check its length
     const apiKey = process.env.GEMINI_API_KEY || '';
-    let geminiTestResult = { status: 'not_tested' };
+    let geminiTestResult: GeminiTestResult = { status: 'not_tested' };
     
     // Try to test the Gemini API directly
     if (apiKey) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = "Say 'API working' if you can read this";
         
         const result = await model.generateContent(prompt);
@@ -20,13 +26,13 @@ export async function GET() {
         
         geminiTestResult = { 
           status: 'success',
-          response: text.substring(0, 50)
+          responseText: text.substring(0, 50)
         };
       } catch (apiError: any) {
         geminiTestResult = { 
           status: 'error',
-          error: apiError.message || 'Unknown API error',
-          code: apiError.code || 'UNKNOWN'
+          errorMessage: apiError.message || 'Unknown API error',
+          errorCode: apiError.code || 'UNKNOWN'
         };
       }
     }
@@ -49,7 +55,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         status: 'error', 
-        error: error.message || 'Health check failed',
+        errorMessage: error.message || 'Health check failed',
         timestamp: new Date().toISOString()
       },
       { status: 500 }
