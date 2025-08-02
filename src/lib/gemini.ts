@@ -1,0 +1,248 @@
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import type { ResumeAnalysis, InterviewQuestion, ChatMessage } from '@/types'
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+// Create generative model
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+
+export class GeminiService {
+  
+  static async analyzeResume(resumeText: string, fileName: string): Promise<ResumeAnalysis> {
+    const prompt = `
+      Analyze this resume comprehensively for a student or young professional. Provide detailed feedback in the following areas:
+
+      Resume Text:
+      ${resumeText}
+
+      Please analyze and return a JSON response with this exact structure:
+      {
+        "fileName": "${fileName}",
+        "analysisId": "generated-id",
+        "timestamp": "current-timestamp", 
+        "overallScore": number (0-100),
+        "sections": {
+          "atsCompatibility": {
+            "score": number (0-100),
+            "issues": ["issue1", "issue2"],
+            "improvements": ["improvement1", "improvement2"],
+            "keywords": {
+              "missing": ["keyword1", "keyword2"],
+              "present": ["keyword3", "keyword4"], 
+              "suggested": ["suggestion1", "suggestion2"]
+            }
+          },
+          "skillsGaps": {
+            "score": number (0-100),
+            "technical": {
+              "present": ["skill1", "skill2"],
+              "missing": ["skill3", "skill4"],
+              "trending": ["trend1", "trend2"]
+            },
+            "soft": {
+              "present": ["soft1", "soft2"],
+              "missing": ["soft3", "soft4"],
+              "important": ["important1", "important2"]
+            },
+            "recommendations": ["rec1", "rec2"]
+          },
+          "experience": {
+            "score": number (0-100),
+            "level": "entry|junior|mid|senior",
+            "strengths": ["strength1", "strength2"],
+            "gaps": ["gap1", "gap2"],
+            "suggestions": ["suggestion1", "suggestion2"],
+            "projectIdeas": ["project1", "project2"]
+          },
+          "grammar": {
+            "score": number (0-100),
+            "errors": [
+              {
+                "type": "spelling|grammar|punctuation",
+                "text": "error text",
+                "suggestion": "correction"
+              }
+            ],
+            "improvements": ["improvement1", "improvement2"]
+          },
+          "formatting": {
+            "score": number (0-100),
+            "issues": ["issue1", "issue2"],
+            "positives": ["positive1", "positive2"],
+            "suggestions": ["suggestion1", "suggestion2"]
+          }
+        },
+        "recommendations": [
+          {
+            "id": "rec-id",
+            "category": "ats|skills|experience|grammar|formatting",
+            "priority": "high|medium|low",
+            "title": "recommendation title",
+            "description": "detailed description",
+            "actionable": "specific action to take",
+            "timeEstimate": "estimated time"
+          }
+        ],
+        "nextSteps": ["step1", "step2", "step3"]
+      }
+
+      Focus on being encouraging and constructive, especially for students who may lack extensive experience. Provide specific, actionable advice.
+    `
+
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
+      
+      // Clean the response text and parse JSON
+      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim()
+      const analysis = JSON.parse(cleanedText)
+      
+      // Add missing fields if not present
+      analysis.analysisId = analysis.analysisId || `analysis-${Date.now()}`
+      analysis.timestamp = new Date()
+      
+      return analysis as ResumeAnalysis
+    } catch (error) {
+      console.error('Error analyzing resume:', error)
+      throw new Error('Failed to analyze resume. Please try again.')
+    }
+  }
+
+  static async generateInterviewQuestions(
+    industry: string, 
+    role: string, 
+    experience: string,
+    count: number = 5
+  ): Promise<InterviewQuestion[]> {
+    const prompt = `
+      Generate ${count} interview questions for a ${experience} level ${role} position in the ${industry} industry.
+      
+      Return a JSON array with this structure:
+      [
+        {
+          "id": "question-id",
+          "question": "interview question",
+          "category": "behavioral|technical|situational|company",
+          "difficulty": "easy|medium|hard",
+          "tips": ["tip1", "tip2", "tip3"],
+          "sampleAnswer": "example answer (optional)"
+        }
+      ]
+      
+      Make sure questions are appropriate for the experience level and include a mix of behavioral and technical questions.
+    `
+
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
+      
+      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim()
+      return JSON.parse(cleanedText) as InterviewQuestion[]
+    } catch (error) {
+      console.error('Error generating interview questions:', error)
+      throw new Error('Failed to generate interview questions. Please try again.')
+    }
+  }
+
+  static async provideFeedback(
+    question: string, 
+    answer: string, 
+    questionCategory: string
+  ): Promise<string> {
+    const prompt = `
+      Provide constructive feedback on this interview answer:
+      
+      Question: ${question}
+      Category: ${questionCategory}
+      Answer: ${answer}
+      
+      Please provide:
+      1. What was good about the answer
+      2. Areas for improvement
+      3. Specific suggestions for a stronger response
+      4. A rating out of 10
+      
+      Be encouraging and constructive, especially for students or junior professionals.
+    `
+
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      return response.text()
+    } catch (error) {
+      console.error('Error providing feedback:', error)
+      throw new Error('Failed to provide feedback. Please try again.')
+    }
+  }
+
+  static async chatResponse(
+    message: string, 
+    context: ChatMessage[] = [],
+    userInfo?: { industry?: string; experience?: string; goals?: string[] }
+  ): Promise<string> {
+    const contextString = context.length > 0 
+      ? `Previous conversation:\n${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n`
+      : ''
+
+    const userContext = userInfo 
+      ? `User context - Industry: ${userInfo.industry || 'Not specified'}, Experience: ${userInfo.experience || 'Not specified'}, Goals: ${userInfo.goals?.join(', ') || 'Not specified'}\n\n`
+      : ''
+
+    const prompt = `
+      You are CareerBoost, a helpful and encouraging AI career assistant for students and young professionals. 
+      
+      ${userContext}${contextString}User message: ${message}
+      
+      Respond in a warm, supportive, and professional manner. Provide practical advice and actionable steps when possible. 
+      Keep responses concise but helpful. If the user asks about resume writing, interview prep, job searching, or career guidance, 
+      provide specific and encouraging advice.
+      
+      If appropriate, suggest using specific features of the CareerBoost platform (resume analysis, interview prep, message templates, etc.).
+    `
+
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      return response.text()
+    } catch (error) {
+      console.error('Error in chat response:', error)
+      return "I'm sorry, I'm having trouble responding right now. Please try asking again!"
+    }
+  }
+
+  static async generateMessageTemplate(
+    type: 'recruiter' | 'followup' | 'networking' | 'interview' | 'feedback',
+    context: string,
+    customization?: { industry?: string; role?: string; company?: string }
+  ): Promise<{ subject: string; body: string; variables: string[] }> {
+    const prompt = `
+      Generate a professional ${type} message template for a student or young professional.
+      
+      Context: ${context}
+      ${customization ? `Industry: ${customization.industry}, Role: ${customization.role}, Company: ${customization.company}` : ''}
+      
+      Return JSON with this structure:
+      {
+        "subject": "email subject line",
+        "body": "email body with [VARIABLE_NAME] placeholders for customization",
+        "variables": ["VARIABLE_NAME", "ANOTHER_VARIABLE"]
+      }
+      
+      Make the tone professional but warm, appropriate for students reaching out in professional contexts.
+    `
+
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
+      
+      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim()
+      return JSON.parse(cleanedText)
+    } catch (error) {
+      console.error('Error generating message template:', error)
+      throw new Error('Failed to generate message template. Please try again.')
+    }
+  }
+}
