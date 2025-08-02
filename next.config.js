@@ -3,9 +3,9 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  env: {
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  },
+  // Remove the env section as it's not needed for server-side environment variables
+  // Environment variables starting with NEXT_PUBLIC_ are automatically available in the browser
+  // Server-side variables like GEMINI_API_KEY should be accessed via process.env directly
   webpack: (config, { isServer }) => {
     // Handle pdfjs-dist in client-side builds
     if (!isServer) {

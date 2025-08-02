@@ -1,14 +1,28 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ResumeAnalysis, InterviewQuestion, ChatMessage } from '@/types'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+// Ensure API key is available
+const apiKey = process.env.GEMINI_API_KEY
+if (!apiKey) {
+  console.error('GEMINI_API_KEY is not set in environment variables')
+}
+
+const genAI = new GoogleGenerativeAI(apiKey || '')
 
 // Create generative model using the latest Gemini 2.0 model
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
 
 export class GeminiService {
   
+  private static checkApiKey() {
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured. Please check your environment variables.')
+    }
+  }
+
   static async analyzeResume(resumeText: string, fileName: string): Promise<ResumeAnalysis> {
+    this.checkApiKey()
+    
     const prompt = `
       Analyze this resume comprehensively for a student or young professional. Provide detailed feedback in the following areas:
 
@@ -115,6 +129,8 @@ export class GeminiService {
     experience: string,
     count: number = 5
   ): Promise<InterviewQuestion[]> {
+    this.checkApiKey()
+    
     const prompt = `
       Generate ${count} interview questions for a ${experience} level ${role} position in the ${industry} industry.
       
@@ -151,6 +167,8 @@ export class GeminiService {
     answer: string, 
     questionCategory: string
   ): Promise<string> {
+    this.checkApiKey()
+    
     const prompt = `
       Provide constructive feedback on this interview answer:
       
@@ -182,6 +200,8 @@ export class GeminiService {
     context: ChatMessage[] = [],
     userInfo?: { industry?: string; experience?: string; goals?: string[] }
   ): Promise<string> {
+    this.checkApiKey()
+    
     const contextString = context.length > 0 
       ? `Previous conversation:\n${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n`
       : ''
@@ -240,6 +260,8 @@ export class GeminiService {
     context: string,
     customization?: { industry?: string; role?: string; company?: string }
   ): Promise<{ subject: string; body: string; variables: string[] }> {
+    this.checkApiKey()
+    
     const prompt = `
       Generate a professional ${type} message template for a student or young professional.
       
