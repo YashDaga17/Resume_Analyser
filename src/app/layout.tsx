@@ -7,6 +7,7 @@ import { ChatBot } from '@/components/ChatBot'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NODE_ENV === 'production' ? 'https://career-boost.vercel.app' : 'http://localhost:3000'),
   title: 'CareerBoost - AI-Powered Career Assistant for Students',
   description: 'Upload your resume for AI analysis, get interview prep, and receive personalized career guidance. Perfect for students and young professionals.',
   keywords: ['resume analysis', 'career guidance', 'interview prep', 'job search', 'students', 'AI assistant'],
@@ -15,6 +16,13 @@ export const metadata: Metadata = {
     title: 'CareerBoost - AI-Powered Career Assistant',
     description: 'Get personalized career guidance and resume analysis',
     type: 'website',
+    url: process.env.NODE_ENV === 'production' ? 'https://career-boost.vercel.app' : 'http://localhost:3000',
+    siteName: 'CareerBoost',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CareerBoost - AI-Powered Career Assistant',
+    description: 'Get personalized career guidance and resume analysis',
   },
 }
 

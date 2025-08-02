@@ -4,10 +4,13 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react'
-import { GeminiService } from '@/lib/gemini'
 import { extractTextFromFile, validateResumeFile, formatFileSize } from '@/lib/utils'
 import type { ResumeAnalysis } from '@/types'
 import toast from 'react-hot-toast'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 
 interface ResumeUploadProps {
   onAnalysisComplete: (analysis: ResumeAnalysis) => void
@@ -74,7 +77,24 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
         throw new Error('Unable to extract text from the file. Please ensure your resume contains readable text.')
       }
 
-      const analysis = await GeminiService.analyzeResume(resumeText, file.name)
+      // Call the API route instead of the Gemini service directly
+      const response = await fetch('/api/analyze-resume', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeText,
+          fileName: file.name,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to analyze resume')
+      }
+
+      const analysis = await response.json()
       
       toast.success('Analysis complete!')
       onAnalysisComplete(analysis)
@@ -95,20 +115,19 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.6 }}
+          className="text-center mb-8"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Upload Your <span className="gradient-text">Resume</span>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Upload Your <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Resume</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Get instant AI-powered feedback on your resume's ATS compatibility, 
-            skill gaps, and areas for improvement. Perfect for students and young professionals.
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Get instant AI-powered feedback on your resume's ATS compatibility and areas for improvement.
           </p>
         </motion.div>
 
@@ -116,167 +135,147 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-white rounded-2xl shadow-xl p-8"
         >
-          {!file ? (
-            /* File Upload Area */
-            <div
-              {...getRootProps()}
-              className={`
-                border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300
-                ${isDragActive 
-                  ? 'border-blue-500 bg-blue-50 scale-105' 
-                  : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-                }
-              `}
-            >
-              <input {...getInputProps()} />
-              
-              <div className="flex flex-col items-center space-y-4">
-                <div className={`
-                  w-16 h-16 rounded-full flex items-center justify-center transition-colors
-                  ${isDragActive ? 'bg-blue-100' : 'bg-gray-100'}
-                `}>
-                  <Upload className={`w-8 h-8 ${isDragActive ? 'text-blue-600' : 'text-gray-600'}`} />
-                </div>
-                
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {isDragActive ? 'Drop your resume here' : 'Upload your resume'}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Drag and drop your file here, or click to browse
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Supports PDF, Word documents (.doc, .docx), and text files • Max 10MB
-                  </p>
-                </div>
-
-                <button 
-                  type="button"
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+          <Card className="border-2">
+            <CardContent className="p-8">
+              {!file ? (
+                /* File Upload Area */
+                <div
+                  {...getRootProps()}
+                  className={`
+                    border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300
+                    ${isDragActive 
+                      ? 'border-primary bg-primary/5 scale-105' 
+                      : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                    }
+                  `}
                 >
-                  Choose File
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* File Preview and Analysis */
-            <div className="space-y-6">
-              {/* File Info */}
-              <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
+                  <input {...getInputProps()} />
+                  
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className={`
+                      w-16 h-16 rounded-full flex items-center justify-center transition-colors
+                      ${isDragActive ? 'bg-primary/10' : 'bg-muted/20'}
+                    `}>
+                      <Upload className={`w-8 h-8 ${isDragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">
+                        {isDragActive ? 'Drop your resume here' : 'Upload your resume'}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        Drag and drop your file here, or click to browse
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2 mb-4">
+                        <Badge variant="default">TXT (best)</Badge>
+                        <Badge variant="secondary">DOCX</Badge>
+                        <Badge variant="outline">PDF (demo only)</Badge>
+                        <Badge variant="outline">Max 10MB</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 TXT format gives the most accurate analysis
+                      </p>
+                    </div>
+
+                    <Button 
+                      type="button"
+                      size="lg"
+                    >
+                      Choose File
+                    </Button>
                   </div>
                 </div>
-                <button
-                  onClick={removeFile}
-                  className="p-1 hover:bg-red-100 rounded-full transition-colors"
-                  disabled={isAnalyzing}
+              ) : (
+                /* File Preview and Analysis */
+                <div className="space-y-6">
+                  {/* File Info */}
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{file.name}</p>
+                            <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeFile}
+                          disabled={isAnalyzing}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Analysis Button */}
+                  <div className="text-center">
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={isAnalyzing}
+                      size="lg"
+                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Analyzing Resume...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          Analyze My Resume
+                        </>
+                      )}
+                    </Button>
+                    
+                    {isAnalyzing && (
+                      <p className="text-sm text-muted-foreground mt-3">
+                        This may take 10-30 seconds. We're analyzing your resume for ATS compatibility, 
+                        skills gaps, and improvement opportunities.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Error Display */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6"
                 >
-                  <X className="w-5 h-5 text-gray-500 hover:text-red-600" />
-                </button>
-              </div>
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Upload Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
 
-              {/* Analysis Button */}
-              <div className="text-center">
-                <button
-                  onClick={handleAnalyze}
-                  disabled={isAnalyzing}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 mx-auto"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Analyzing Resume...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Analyze My Resume</span>
-                    </>
-                  )}
-                </button>
-                
-                {isAnalyzing && (
-                  <p className="text-sm text-gray-600 mt-3">
-                    This may take 10-30 seconds. We're analyzing your resume for ATS compatibility, 
-                    skills gaps, and improvement opportunities.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3"
-            >
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-red-900">Upload Error</h4>
-                <p className="text-red-700 text-sm mt-1">{error}</p>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Help Section */}
+          {/* Quick Info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6"
+            className="mt-8"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">What our AI will analyze:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">ATS Compatibility</h4>
-                  <p className="text-sm text-gray-600">How well your resume passes applicant tracking systems</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Skills Analysis</h4>
-                  <p className="text-sm text-gray-600">Technical and soft skills gaps and recommendations</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Experience Enhancement</h4>
-                  <p className="text-sm text-gray-600">Tips for students with limited work experience</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Grammar & Formatting</h4>
-                  <p className="text-sm text-gray-600">Professional writing and layout improvements</p>
-                </div>
-              </div>
-            </div>
+            <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-0">
+              <CardContent className="p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Our AI analyzes ATS compatibility, skills gaps, experience enhancement, and formatting for professional improvement.
+                </p>
+              </CardContent>
+            </Card>
           </motion.div>
         </motion.div>
       </div>

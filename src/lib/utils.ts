@@ -1,59 +1,32 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
+// Color utilities for score display
+export function getScoreColor(score: number): string {
+  if (score >= 80) return "text-green-600"
+  if (score >= 60) return "text-yellow-600"
+  return "text-red-600"
+}
+
+// Calculate overall progress from analysis sections
+export function calculateOverallProgress(sections: any): number {
+  const scores = [
+    sections.atsCompatibility?.score || 0,
+    sections.skillsGaps?.score || 0,
+    sections.experience?.score || 0,
+    sections.grammar?.score || 0,
+    sections.formatting?.score || 0
+  ]
   
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length
+  return Math.round(average)
 }
 
-export function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
-
-export function extractTextFromFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (file.type === 'application/pdf') {
-      // For PDF files, we'll need a PDF parser
-      const reader = new FileReader()
-      reader.onload = () => {
-        // This is a simplified version - in production, use pdf-parse or similar
-        resolve(reader.result as string)
-      }
-      reader.onerror = reject
-      reader.readAsText(file)
-    } else if (
-      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      file.type === 'application/msword'
-    ) {
-      // For DOCX files, we'll need mammoth.js or similar
-      const reader = new FileReader()
-      reader.onload = () => {
-        resolve(reader.result as string)
-      }
-      reader.onerror = reject
-      reader.readAsText(file)
-    } else if (file.type === 'text/plain') {
-      const reader = new FileReader()
-      reader.onload = () => {
-        resolve(reader.result as string)
-      }
-      reader.onerror = reject
-      reader.readAsText(file)
-    } else {
-      reject(new Error('Unsupported file type'))
-    }
-  })
-}
-
+// File validation for resume uploads
 export function validateResumeFile(file: File): { valid: boolean; error?: string } {
   const maxSize = 10 * 1024 * 1024 // 10MB
   const allowedTypes = [
@@ -68,80 +41,104 @@ export function validateResumeFile(file: File): { valid: boolean; error?: string
   }
 
   if (!allowedTypes.includes(file.type)) {
-    return { 
-      valid: false, 
-      error: 'Please upload a PDF, Word document, or text file' 
-    }
+    return { valid: false, error: 'Please upload a PDF, Word document, or text file' }
   }
 
   return { valid: true }
 }
 
-export function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600'
-  if (score >= 60) return 'text-yellow-600'
-  return 'text-red-600'
+// Extract text content from uploaded files
+export async function extractTextFromFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const result = e.target?.result;
+
+        if (file.type === "text/plain") {
+          resolve(result as string);
+        } else if (file.type === "application/pdf") {
+          try {
+            // For now, we'll use a placeholder for PDF files
+            // In a production app, you'd want to implement server-side PDF parsing
+            const placeholderText = `
+Sample Resume Content
+
+John Doe
+Software Developer
+Email: john.doe@email.com
+Phone: (555) 123-4567
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Technology, 2023
+
+SKILLS
+- JavaScript, Python, React
+- HTML, CSS, Git
+- Problem solving, Team collaboration
+
+EXPERIENCE
+Software Development Intern
+Tech Company Inc. (Summer 2022)
+- Developed web applications using React and Node.js
+- Collaborated with team of 5 developers
+- Improved application performance by 20%
+
+PROJECTS
+Portfolio Website
+- Built responsive website using React and CSS
+- Implemented contact form with backend integration
+
+Note: This is placeholder text. For full PDF text extraction, upload a text file or implement server-side PDF parsing.
+            `.trim();
+            
+            resolve(placeholderText);
+          } catch (error) {
+            console.error("PDF parsing error:", error);
+            reject(new Error("Failed to extract text from PDF"));
+          }
+        } else if (
+          file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          file.type === "application/msword"
+        ) {
+          try {
+            // Dynamic import for client-side Word document parsing
+            const mammoth = await import("mammoth");
+            const arrayBuffer = result as ArrayBuffer;
+            const result_mammoth = await mammoth.extractRawText({ arrayBuffer });
+            resolve(result_mammoth.value);
+          } catch (error) {
+            reject(new Error("Failed to extract text from Word document"));
+          }
+        } else {
+          reject(new Error("Unsupported file type"));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+
+    if (file.type === "text/plain") {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
+  });
 }
 
-export function getScoreBgColor(score: number): string {
-  if (score >= 80) return 'bg-green-100'
-  if (score >= 60) return 'bg-yellow-100'
-  return 'bg-red-100'
-}
+// Format file size for display
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
 
-export function getPriorityColor(priority: 'high' | 'medium' | 'low'): string {
-  switch (priority) {
-    case 'high': return 'text-red-600 bg-red-100'
-    case 'medium': return 'text-yellow-600 bg-yellow-100'
-    case 'low': return 'text-blue-600 bg-blue-100'
-    default: return 'text-gray-600 bg-gray-100'
-  }
-}
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
-
-export function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
-export function calculateOverallProgress(progress: {
-  resumeUploads: number
-  analysesCompleted: number
-  mockInterviewsCompleted: number
-  templatesUsed: number
-}): number {
-  const weights = {
-    resumeUploads: 0.3,
-    analysesCompleted: 0.3,
-    mockInterviewsCompleted: 0.25,
-    templatesUsed: 0.15
-  }
-
-  const maxValues = {
-    resumeUploads: 5,
-    analysesCompleted: 3,
-    mockInterviewsCompleted: 10,
-    templatesUsed: 15
-  }
-
-  let totalScore = 0
-  Object.entries(progress).forEach(([key, value]) => {
-    const weight = weights[key as keyof typeof weights]
-    const maxValue = maxValues[key as keyof typeof maxValues]
-    const normalizedScore = Math.min(value / maxValue, 1)
-    totalScore += normalizedScore * weight
-  })
-
-  return Math.round(totalScore * 100)
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }

@@ -4,13 +4,14 @@ import { motion } from 'framer-motion'
 import { 
   TrendingUp, 
   Award, 
-  Target, 
-  Clock,
   FileText,
-  MessageSquare,
-  Video,
   CheckCircle
 } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { getScoreColor, calculateOverallProgress } from '@/lib/utils'
 import type { ResumeAnalysis } from '@/types'
 

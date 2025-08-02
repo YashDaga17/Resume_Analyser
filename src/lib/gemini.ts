@@ -3,8 +3,8 @@ import type { ResumeAnalysis, InterviewQuestion, ChatMessage } from '@/types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// Create generative model
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+// Create generative model using the latest Gemini 2.0 model
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
 export class GeminiService {
   
@@ -196,16 +196,39 @@ export class GeminiService {
       ${userContext}${contextString}User message: ${message}
       
       Respond in a warm, supportive, and professional manner. Provide practical advice and actionable steps when possible. 
-      Keep responses concise but helpful. If the user asks about resume writing, interview prep, job searching, or career guidance, 
-      provide specific and encouraging advice.
+      Keep responses concise but helpful and conversational (maximum 3-4 short paragraphs or 200 words). 
+      Use simple, clean formatting without markdown symbols like *, **, or bullet points.
+      
+      Write in a friendly, encouraging tone like you're talking to a friend. Keep paragraphs short and easy to read.
+      Avoid using markdown formatting, asterisks, or special characters in your response.
+      
+      If the user asks about resume writing, interview prep, job searching, or career guidance, 
+      provide specific and encouraging advice in a natural, conversational way.
       
       If appropriate, suggest using specific features of the CareerBoost platform (resume analysis, interview prep, message templates, etc.).
+      
+      Remember to keep your response brief and to the point for a chat interface.
     `
 
     try {
       const result = await model.generateContent(prompt)
       const response = await result.response
-      return response.text()
+      const text = response.text()
+      
+      // Clean up markdown formatting from the response
+      let cleanedResponse = text
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+        .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
+        .replace(/^\s*[\*\-\+]\s+/gm, '') // Remove bullet points
+        .replace(/^#{1,6}\s+/gm, '')     // Remove headers
+        .trim()
+      
+      // Limit response length to prevent overflow (approximately 300 words max)
+      if (cleanedResponse.length > 1200) {
+        cleanedResponse = cleanedResponse.substring(0, 1200) + '...'
+      }
+      
+      return cleanedResponse
     } catch (error) {
       console.error('Error in chat response:', error)
       return "I'm sorry, I'm having trouble responding right now. Please try asking again!"

@@ -8,6 +8,7 @@ import { AnalysisResults } from '@/components/AnalysisResults'
 import { MessageTemplates } from '@/components/MessageTemplates'
 import { InterviewPrep } from '@/components/InterviewPrep'
 import { ProgressDashboard } from '@/components/ProgressDashboard'
+import { Button } from '@/components/ui/button'
 import type { ResumeAnalysis } from '@/types'
 
 export default function HomePage() {
@@ -49,52 +50,52 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div 
               className="flex items-center space-x-2 cursor-pointer"
               onClick={() => setCurrentView('home')}
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">C</span>
               </div>
-              <span className="text-xl font-bold gradient-text">CareerBoost</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">CareerBoost</span>
             </div>
             
-            <div className="hidden md:flex items-center space-x-8">
-              <button 
+            <div className="hidden md:flex items-center space-x-2">
+              <Button 
+                variant="ghost"
                 onClick={() => setCurrentView('upload')}
-                className="text-gray-600 hover:text-blue-600 font-medium"
               >
                 Resume Analysis
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
                 onClick={() => setCurrentView('templates')}
-                className="text-gray-600 hover:text-blue-600 font-medium"
               >
                 Message Templates
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
                 onClick={() => setCurrentView('interview')}
-                className="text-gray-600 hover:text-blue-600 font-medium"
               >
                 Interview Prep
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
                 onClick={() => setCurrentView('dashboard')}
-                className="text-gray-600 hover:text-blue-600 font-medium"
               >
                 Dashboard
-              </button>
+              </Button>
             </div>
             
-            <button 
+            <Button 
               onClick={() => setCurrentView('upload')}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
             >
               Get Started
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
