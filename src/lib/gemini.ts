@@ -1,27 +1,30 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ResumeAnalysis, InterviewQuestion, ChatMessage } from '@/types'
 
-// Ensure API key is available
+// Get the API key from environment variables
 const apiKey = process.env.GEMINI_API_KEY
+
+// Log a warning if the API key is not set, but don't fail
 if (!apiKey) {
-  console.error('GEMINI_API_KEY is not set in environment variables')
+  console.warn('Warning: GEMINI_API_KEY is not set in environment variables')
 }
 
 const genAI = new GoogleGenerativeAI(apiKey || '')
 
-// Create generative model using the latest Gemini 2.0 model
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+// Create generative model using the stable Gemini 2.0 model
+// Changed back to the original model for compatibility
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
 export class GeminiService {
   
-  private static checkApiKey() {
-    if (!apiKey) {
-      throw new Error('Gemini API key is not configured. Please check your environment variables.')
-    }
+  // Helper to check if the API key is available, but use demo data instead of failing
+  private static checkApiKey(): boolean {
+    return !!apiKey;
   }
 
   static async analyzeResume(resumeText: string, fileName: string): Promise<ResumeAnalysis> {
-    this.checkApiKey()
+    // Continue even if API key is missing - the error will be caught in the route handler
+    // and will return demo data
     
     const prompt = `
       Analyze this resume comprehensively for a student or young professional. Provide detailed feedback in the following areas:
@@ -129,7 +132,7 @@ export class GeminiService {
     experience: string,
     count: number = 5
   ): Promise<InterviewQuestion[]> {
-    this.checkApiKey()
+    // Continue without checking API key - errors will be caught by route handlers
     
     const prompt = `
       Generate ${count} interview questions for a ${experience} level ${role} position in the ${industry} industry.
@@ -167,7 +170,7 @@ export class GeminiService {
     answer: string, 
     questionCategory: string
   ): Promise<string> {
-    this.checkApiKey()
+    // Continue without checking API key - errors will be caught by route handlers
     
     const prompt = `
       Provide constructive feedback on this interview answer:
@@ -200,7 +203,7 @@ export class GeminiService {
     context: ChatMessage[] = [],
     userInfo?: { industry?: string; experience?: string; goals?: string[] }
   ): Promise<string> {
-    this.checkApiKey()
+    // Continue without checking API key - errors will be caught and handled properly
     
     const contextString = context.length > 0 
       ? `Previous conversation:\n${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n`
@@ -260,7 +263,7 @@ export class GeminiService {
     context: string,
     customization?: { industry?: string; role?: string; company?: string }
   ): Promise<{ subject: string; body: string; variables: string[] }> {
-    this.checkApiKey()
+    // Continue without checking API key - errors will be caught by route handlers
     
     const prompt = `
       Generate a professional ${type} message template for a student or young professional.

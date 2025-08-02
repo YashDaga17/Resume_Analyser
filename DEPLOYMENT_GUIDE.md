@@ -40,16 +40,60 @@ After adding the environment variables:
 
 ### 3. Alternative: Deploy from Local
 
-If you want to deploy from your local machine:
+If you want to deploy from your local machine, you have several options to install Vercel CLI:
 
+#### Option A: Using npx (Recommended - No Installation Required)
 ```bash
-# Install Vercel CLI if you haven't already
-npm i -g vercel
+# Deploy directly without installing
+npx vercel login
+npx vercel --prod
+```
 
+#### Option B: Install Vercel CLI without sudo
+```bash
+# Method 1: Using npm with --prefix (avoids permission issues)
+npm install --prefix ~/.local vercel
+export PATH="$HOME/.local/bin:$PATH"
+
+# Method 2: Using pnpm (if you have it)
+pnpm add -g vercel
+
+# Method 3: Using yarn (if you have it)
+yarn global add vercel
+```
+
+#### Option C: Using Homebrew (Recommended for macOS)
+```bash
+# Install using Homebrew (if you have it)
+brew install vercel-cli
+
+# Or install Homebrew first, then Vercel
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install vercel-cli
+```
+
+#### Option D: Fix npm permissions (if you prefer global npm installs)
+```bash
+# Create a directory for global packages
+mkdir ~/.npm-global
+
+# Configure npm to use the new directory
+npm config set prefix '~/.npm-global'
+
+# Add to your shell profile (~/.zshrc for zsh)
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
+source ~/.zshrc
+
+# Now install Vercel globally
+npm install -g vercel
+```
+
+#### Deploy Commands:
+```bash
 # Login to Vercel
 vercel login
 
-# Deploy
+# Deploy to production
 vercel --prod
 ```
 
