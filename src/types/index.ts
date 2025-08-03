@@ -9,9 +9,14 @@ export interface ResumeAnalysis {
     experience: ExperienceAnalysis
     grammar: GrammarAnalysis
     formatting: FormattingAnalysis
+    flawAnalysis: FlawAnalysis
+    impactRewrite: ImpactAnalysis
+    professionalSummary: SummaryAnalysis
   }
   recommendations: Recommendation[]
   nextSteps: string[]
+  careerRoadmap: CareerRoadmap
+  skillsGapTable: SkillsGapTable[]
 }
 
 export interface ATSAnalysis {
@@ -154,4 +159,70 @@ export interface UserSession {
     targetRoles?: string[]
     communicationStyle?: 'professional' | 'casual' | 'encouraging'
   }
+}
+
+export interface FlawAnalysis {
+  score: number
+  buzzwords: {
+    overused: string[]
+    suggestions: string[]
+  }
+  weakAreas: {
+    area: string
+    issue: string
+    improvement: string
+  }[]
+  missingMetrics: string[]
+  structuralIssues: string[]
+  honestFeedback: string[]
+}
+
+export interface ImpactAnalysis {
+  score: number
+  currentIssues: string[]
+  rewriteSuggestions: {
+    original: string
+    improved: string
+    reasoning: string
+  }[]
+  actionVerbSuggestions: string[]
+  quantificationTips: string[]
+  achievementHighlights: string[]
+}
+
+export interface SummaryAnalysis {
+  score: number
+  currentSummary: string
+  hookStrength: number
+  suggestedSummary: string
+  impactKeywords: string[]
+  improvements: string[]
+  personalBranding: string[]
+}
+
+export interface CareerRoadmap {
+  currentLevel: string
+  targetRoles: string[]
+  skillProgression: {
+    role: string
+    requiredSkills: string[]
+    timeToAchieve: string
+    learningPath: string[]
+  }[]
+  industryTrends: string[]
+  certificationRecommendations: string[]
+}
+
+export interface SkillsGapTable {
+  role: string
+  industry: string
+  requiredSkills: {
+    skill: string
+    importance: 'Critical' | 'Important' | 'Nice to Have'
+    currentLevel: 'None' | 'Beginner' | 'Intermediate' | 'Advanced'
+    gap: 'High' | 'Medium' | 'Low'
+    learningResources: string[]
+    timeToLearn: string
+  }[]
+  overallMatch: number
 }

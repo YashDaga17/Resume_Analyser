@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Hero } from '@/components/Hero'
 import { Features } from '@/components/Features'
 import { ResumeUpload } from '@/components/ResumeUpload'
-import { AnalysisResults } from '@/components/AnalysisResults'
+import { EnhancedAnalysisResults } from '@/components/EnhancedAnalysisResults'
 import { MessageTemplates } from '@/components/MessageTemplates'
 import { InterviewPrep } from '@/components/InterviewPrep'
 import { ProgressDashboard } from '@/components/ProgressDashboard'
@@ -25,7 +25,7 @@ export default function HomePage() {
       case 'upload':
         return <ResumeUpload onAnalysisComplete={handleAnalysisComplete} />
       case 'analysis':
-        return resumeAnalysis ? <AnalysisResults analysis={resumeAnalysis} /> : null
+        return resumeAnalysis ? <EnhancedAnalysisResults analysis={resumeAnalysis} /> : null
       case 'templates':
         return <MessageTemplates />
       case 'interview':

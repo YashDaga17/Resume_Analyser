@@ -27,12 +27,22 @@ export class GeminiService {
     // and will return demo data
     
     const prompt = `
-      Analyze this resume comprehensively for a student or young professional. Provide detailed feedback in the following areas:
+      Act as an expert recruiter and career coach. Analyze this resume using multiple specialized approaches:
+
+      1. SPOT THE FLAWS: Act as a critical recruiter reviewing this resume. Highlight weak areas, overused buzzwords, missing metrics, and be brutally honest about what needs improvement.
+
+      2. REWRITE FOR IMPACT: Identify how to make this resume more results-driven, quantifiable, and compelling. Focus on achievements over duties.
+
+      3. ATS OPTIMIZATION: Analyze ATS compatibility and suggest industry-specific keywords that should be naturally integrated.
+
+      4. CRAFT THE HOOK: Evaluate the professional summary/objective and suggest improvements for maximum recruiter impact.
+
+      5. EXPERIENCE ENHANCEMENT: Analyze how to rephrase experience sections with action verbs, quantifiable outcomes, and transferable skills.
 
       Resume Text:
       ${resumeText}
 
-      Please analyze and return a JSON response with this exact structure:
+      Please analyze and return a JSON response with this enhanced structure:
       {
         "fileName": "${fileName}",
         "analysisId": "generated-id",
@@ -87,12 +97,52 @@ export class GeminiService {
             "issues": ["issue1", "issue2"],
             "positives": ["positive1", "positive2"],
             "suggestions": ["suggestion1", "suggestion2"]
+          },
+          "flawAnalysis": {
+            "score": number (0-100),
+            "buzzwords": {
+              "overused": ["buzzword1", "buzzword2"],
+              "suggestions": ["better1", "better2"]
+            },
+            "weakAreas": [
+              {
+                "area": "section name",
+                "issue": "specific problem",
+                "improvement": "how to fix it"
+              }
+            ],
+            "missingMetrics": ["Add quantified achievements", "Include percentage improvements"],
+            "structuralIssues": ["issue1", "issue2"],
+            "honestFeedback": ["brutal but constructive feedback"]
+          },
+          "impactRewrite": {
+            "score": number (0-100),
+            "currentIssues": ["duty-focused language", "weak action verbs"],
+            "rewriteSuggestions": [
+              {
+                "original": "original text",
+                "improved": "improved version",
+                "reasoning": "why this is better"
+              }
+            ],
+            "actionVerbSuggestions": ["verb1", "verb2"],
+            "quantificationTips": ["tip1", "tip2"],
+            "achievementHighlights": ["highlight1", "highlight2"]
+          },
+          "professionalSummary": {
+            "score": number (0-100),
+            "currentSummary": "current summary text or 'Not found'",
+            "hookStrength": number (0-100),
+            "suggestedSummary": "powerful 3-line summary",
+            "impactKeywords": ["keyword1", "keyword2"],
+            "improvements": ["improvement1", "improvement2"],
+            "personalBranding": ["brand1", "brand2"]
           }
         },
         "recommendations": [
           {
             "id": "rec-id",
-            "category": "ats|skills|experience|grammar|formatting",
+            "category": "ats|skills|experience|grammar|formatting|flaws|impact|summary",
             "priority": "high|medium|low",
             "title": "recommendation title",
             "description": "detailed description",
@@ -100,7 +150,38 @@ export class GeminiService {
             "timeEstimate": "estimated time"
           }
         ],
-        "nextSteps": ["step1", "step2", "step3"]
+        "nextSteps": ["step1", "step2", "step3"],
+        "careerRoadmap": {
+          "currentLevel": "entry|junior|mid|senior",
+          "targetRoles": ["role1", "role2"],
+          "skillProgression": [
+            {
+              "role": "target role",
+              "requiredSkills": ["skill1", "skill2"],
+              "timeToAchieve": "6-12 months",
+              "learningPath": ["step1", "step2"]
+            }
+          ],
+          "industryTrends": ["trend1", "trend2"],
+          "certificationRecommendations": ["cert1", "cert2"]
+        },
+        "skillsGapTable": [
+          {
+            "role": "Software Engineer",
+            "industry": "Technology",
+            "requiredSkills": [
+              {
+                "skill": "JavaScript",
+                "importance": "Critical|Important|Nice to Have",
+                "currentLevel": "None|Beginner|Intermediate|Advanced",
+                "gap": "High|Medium|Low",
+                "learningResources": ["resource1", "resource2"],
+                "timeToLearn": "2-3 months"
+              }
+            ],
+            "overallMatch": number (0-100)
+          }
+        ]
       }
 
       Focus on being encouraging and constructive, especially for students who may lack extensive experience. Provide specific, actionable advice.
