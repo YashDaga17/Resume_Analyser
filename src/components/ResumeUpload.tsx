@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react'
@@ -11,6 +11,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+
+// Declare global interface for AdSense
+declare global {
+  interface Window {
+    adsbygoogle: any[]
+  }
+}
 
 interface ResumeUploadProps {
   onAnalysisComplete: (analysis: ResumeAnalysis) => void
@@ -113,6 +120,17 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
     setFile(null)
     setError(null)
   }
+
+  // Add useEffect for AdSense
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.adsbygoogle) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (err) {
+      console.error('AdSense error:', err);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -276,6 +294,28 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
                 </p>
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Google AdSense - Non-intrusive placement at bottom */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-12 mb-8"
+          >
+            <div className="text-center mb-4">
+              <p className="text-xs text-muted-foreground">Advertisement</p>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <ins 
+                className="adsbygoogle"
+                style={{ display: 'block' }}
+                data-ad-client="ca-pub-7701180604741961"
+                data-ad-slot="4303950704"
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+              />
+            </div>
           </motion.div>
         </motion.div>
       </div>

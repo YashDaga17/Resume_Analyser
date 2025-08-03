@@ -33,6 +33,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script 
+          async 
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7701180604741961"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={inter.className}>
         <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
           {children}
