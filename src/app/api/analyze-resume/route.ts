@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GeminiService } from '@/lib/gemini'
-import { demoAnalysis } from '@/lib/demo-data'
 
 export async function POST(request: NextRequest) {
   let fileName = 'unknown-file'
@@ -17,34 +16,70 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if this is placeholder/demo text
+    if (resumeText.includes('Sample Resume Content') || 
+        resumeText.includes('This is placeholder text') ||
+        resumeText.includes('placeholder text. For full PDF text extraction')) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to extract text from your PDF. This could be because:\n• The PDF contains only images (scanned document)\n• The PDF is password protected\n• The file is corrupted\n\nPlease try:\n• Converting your PDF to a Word document (.docx)\n• Using a text-based PDF (not a scanned image)\n• Uploading a plain text file (.txt)',
+          errorType: 'PDF_EXTRACTION_FAILED'
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log(`Analyzing resume: ${fileName}, content length: ${resumeText.length}`)
+
     const analysis = await GeminiService.analyzeResume(resumeText, fileName)
     
     return NextResponse.json(analysis)
   } catch (error: any) {
     console.error('Resume analysis error:', error)
+    console.log('Error details:', {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code
+    })
     
-    // Handle specific rate limiting errors with demo mode
-    if (error?.message?.includes('429') || error?.message?.includes('quota')) {
-      console.log('Rate limit exceeded, returning demo analysis')
-      
-      // Return demo analysis with user's filename
-      const demoWithUserFile = {
-        ...demoAnalysis,
-        fileName: fileName,
-        analysisId: `demo-${Date.now()}`,
-        timestamp: new Date()
-      }
+    // Handle specific API errors with clear messages
+    if (error?.message?.includes('429') || 
+        error?.message?.includes('quota') || 
+        error?.message?.includes('rate') ||
+        error?.status === 429) {
       
       return NextResponse.json({
-        ...demoWithUserFile,
-        isDemo: true,
-        message: "You've hit the free tier rate limit. Here's a demo analysis to show you what our AI can do!"
-      })
+        error: 'API rate limit exceeded. Please wait a few minutes and try again.',
+        errorType: 'RATE_LIMIT',
+        retryAfter: 300 // 5 minutes
+      }, { status: 429 })
+    }
+
+    // Handle API key issues
+    if (error?.message?.includes('API_KEY') || 
+        error?.message?.includes('401') ||
+        error?.message?.includes('forbidden')) {
+      
+      return NextResponse.json({
+        error: 'API configuration issue. Please contact support.',
+        errorType: 'API_KEY_ERROR'
+      }, { status: 500 })
+    }
+
+    // Handle invalid content
+    if (error?.message?.includes('SAFETY') || 
+        error?.message?.includes('content')) {
+      
+      return NextResponse.json({
+        error: 'Resume content cannot be analyzed. Please ensure your resume contains appropriate professional content.',
+        errorType: 'CONTENT_ERROR'
+      }, { status: 400 })
     }
     
-    return NextResponse.json(
-      { error: 'Failed to analyze resume. Please try again.' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      error: 'Failed to analyze resume. Please check your resume content and try again.',
+      errorType: 'ANALYSIS_ERROR',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }

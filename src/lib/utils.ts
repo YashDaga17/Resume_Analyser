@@ -49,6 +49,8 @@ export function validateResumeFile(file: File): { valid: boolean; error?: string
 
 // Extract text content from uploaded files
 export async function extractTextFromFile(file: File): Promise<string> {
+  console.log(`Starting text extraction for: ${file.name} (${file.type}, ${formatFileSize(file.size)})`);
+  
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -57,71 +59,64 @@ export async function extractTextFromFile(file: File): Promise<string> {
         const result = e.target?.result;
 
         if (file.type === "text/plain") {
-          resolve(result as string);
+          const textContent = result as string;
+          if (textContent.trim().length < 10) {
+            reject(new Error("The text file appears to be empty or too short."));
+            return;
+          }
+          console.log(`Successfully extracted ${textContent.length} characters from text file`);
+          resolve(textContent.trim());
         } else if (file.type === "application/pdf") {
           try {
-            // For now, we'll use a placeholder for PDF files
-            // In a production app, you'd want to implement server-side PDF parsing
-            const placeholderText = `
-Sample Resume Content
-
-John Doe
-Software Developer
-Email: john.doe@email.com
-Phone: (555) 123-4567
-
-EDUCATION
-Bachelor of Science in Computer Science
-University of Technology, 2023
-
-SKILLS
-- JavaScript, Python, React
-- HTML, CSS, Git
-- Problem solving, Team collaboration
-
-EXPERIENCE
-Software Development Intern
-Tech Company Inc. (Summer 2022)
-- Developed web applications using React and Node.js
-- Collaborated with team of 5 developers
-- Improved application performance by 20%
-
-PROJECTS
-Portfolio Website
-- Built responsive website using React and CSS
-- Implemented contact form with backend integration
-
-Note: This is placeholder text. For full PDF text extraction, upload a text file or implement server-side PDF parsing.
-            `.trim();
-            
-            resolve(placeholderText);
+            // Use the enhanced fallback extraction - dynamic import to avoid circular dependencies
+            const { extractTextFromFileWithFallback } = await import('./pdf-fallback');
+            const extractedText = await extractTextFromFileWithFallback(file);
+            console.log(`Successfully extracted ${extractedText.length} characters from PDF`);
+            resolve(extractedText);
           } catch (error) {
             console.error("PDF parsing error:", error);
-            reject(new Error("Failed to extract text from PDF"));
+            if (error instanceof Error) {
+              reject(error);
+            } else {
+              reject(new Error("PDF processing failed. Please try uploading a Word document (.docx) instead."));
+            }
           }
         } else if (
           file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
           file.type === "application/msword"
         ) {
           try {
+            console.log('Processing Word document...');
             // Dynamic import for client-side Word document parsing
             const mammoth = await import("mammoth");
             const arrayBuffer = result as ArrayBuffer;
             const result_mammoth = await mammoth.extractRawText({ arrayBuffer });
-            resolve(result_mammoth.value);
+            
+            const extractedText = result_mammoth.value.trim();
+            
+            if (extractedText.length < 50) {
+              reject(new Error("Unable to extract sufficient text from the Word document. Please ensure the document contains readable text."));
+              return;
+            }
+            
+            console.log(`Successfully extracted ${extractedText.length} characters from Word document`);
+            resolve(extractedText);
           } catch (error) {
-            reject(new Error("Failed to extract text from Word document"));
+            console.error("Word document parsing error:", error);
+            reject(new Error("Failed to extract text from Word document. Please ensure the file is not corrupted and try again."));
           }
         } else {
-          reject(new Error("Unsupported file type"));
+          reject(new Error("Unsupported file type. Please upload PDF, Word (.docx), or text (.txt) files."));
         }
       } catch (error) {
-        reject(error);
+        console.error("File processing error:", error);
+        reject(error instanceof Error ? error : new Error("Unknown error occurred while processing the file."));
       }
     };
 
     reader.onerror = () => {
-      reject(new Error("Failed to read file"));
+      console.error("File reader error");
+      reject(new Error("Failed to read the uploaded file. Please try again."));
     };
 
     if (file.type === "text/plain") {

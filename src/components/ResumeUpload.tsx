@@ -78,10 +78,36 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
     try {
       toast.loading('Analyzing your resume...', { duration: 2000 })
       
-      const resumeText = await extractTextFromFile(file)
+      let resumeText
+      try {
+        resumeText = await extractTextFromFile(file)
+      } catch (extractionError) {
+        // Handle file extraction errors specifically with helpful guidance
+        let errorMessage = extractionError instanceof Error ? extractionError.message : 'Failed to extract text from file'
+        
+        // Add specific guidance for PDF issues
+        if (file.type === "application/pdf") {
+          errorMessage = `📄 PDF Text Extraction Issue
+
+We're having trouble extracting text from your PDF. This usually happens when:
+• The PDF contains only images (scanned document)
+• The PDF uses unsupported fonts or encoding
+• Network issues with PDF processing libraries
+
+� Quick Solutions:
+1. Copy and paste your resume text into a .txt file and upload that
+2. Convert your PDF to a Word document (.docx) 
+3. Use "Print to PDF" in Google Docs/Word to create a text-based PDF
+4. Try a different PDF viewer to save/export as text
+
+Technical error: ${errorMessage}`
+        }
+        
+        throw new Error(errorMessage)
+      }
       
       if (!resumeText.trim()) {
-        throw new Error('Unable to extract text from the file. Please ensure your resume contains readable text.')
+        throw new Error('📄 Empty File\n\nThe uploaded file appears to be empty or contains no readable text. Please check your file and try again.')
       }
 
       // Call the API route instead of the Gemini service directly
@@ -98,6 +124,18 @@ export function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
 
       if (!response.ok) {
         const errorData = await response.json()
+        
+        // Handle different error types with specific messages
+        if (errorData.errorType === 'PDF_EXTRACTION_FAILED') {
+          throw new Error('❌ PDF Text Extraction Failed\n\nWe couldn\'t extract readable text from your PDF. This usually happens when:\n• The PDF contains only images (scanned document)\n• The PDF is password protected\n• The file is corrupted\n\nSolutions:\n• Convert your PDF to a Word document (.docx)\n• Use a text-based PDF (not a scanned image)\n• Upload as a plain text file (.txt)')
+        } else if (errorData.errorType === 'RATE_LIMIT') {
+          throw new Error('⏰ Rate Limit Exceeded\n\nPlease wait a few minutes before trying again. Our AI service has usage limits to ensure quality for all users.')
+        } else if (errorData.errorType === 'API_KEY_ERROR') {
+          throw new Error('🔧 Service Configuration Issue\n\nThere\'s a temporary issue with our AI service. Please try again in a few minutes or contact support.')
+        } else if (errorData.errorType === 'content_too_large') {
+          throw new Error('📄 Resume Too Long\n\nYour resume content is too large to process. Please try:\n• A shorter resume (1-2 pages recommended)\n• Removing large images or graphics\n• Simplifying the formatting')
+        }
+        
         throw new Error(errorData.error || 'Failed to analyze resume')
       }
 

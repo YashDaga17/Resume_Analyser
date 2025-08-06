@@ -99,42 +99,43 @@ export const demoAnalysis: ResumeAnalysis = {
     flawAnalysis: {
       score: 65,
       buzzwords: {
-        overused: ["Responsible for", "Hard worker", "Team player", "Detail-oriented"],
-        suggestions: ["Managed and optimized", "Delivered results", "Collaborated effectively", "Ensured accuracy in"]
+        overused: ["Problem solving", "Analytical skills", "Team collaboration", "Collaborative development", "Detail-oriented", "Self-motivated"],
+        suggestions: ["Data-driven analysis", "Cross-functional partnerships", "Innovative solutions", "Strategic problem-solving", "Results-oriented approach", "Initiative-driven"]
       },
       weakAreas: [
         {
-          area: "Work Experience",
-          issue: "Focuses on duties rather than achievements",
-          improvement: "Rewrite bullet points to highlight specific accomplishments and measurable results"
+          area: "Skills",
+          issue: "Skills are listed but not quantified or demonstrated through examples.",
+          improvement: "Provide specific examples of how you used each skill in a project or experience."
         },
         {
-          area: "Skills Section", 
-          issue: "Lists skills without context or proficiency level",
-          improvement: "Add proficiency levels and provide examples of how you've used these skills"
+          area: "Experience", 
+          issue: "Descriptions are duty-based rather than achievement-based.",
+          improvement: "Focus on what you accomplished and the impact you made, using action verbs and quantifiable results."
         },
         {
           area: "Professional Summary",
-          issue: "Generic and doesn't highlight unique value proposition",
-          improvement: "Create a compelling hook that showcases your specific strengths and career goals"
+          issue: "Missing or generic professional summary that doesn't grab attention.",
+          improvement: "Create a compelling 3-line summary highlighting your unique value proposition and key achievements."
         }
       ],
       missingMetrics: [
-        "Add percentage improvements or growth numbers",
-        "Include team sizes you've worked with",
-        "Specify project budgets or timelines",
-        "Quantify the impact of your contributions"
+        "Include percentage improvements (e.g., 'Improved system efficiency by 25%')",
+        "Mention the number of users impacted, lines of code written, or features developed",
+        "Add timeline metrics (e.g., 'Delivered project 2 weeks ahead of schedule')",
+        "Include budget or resource management figures"
       ],
       structuralIssues: [
-        "Education section takes up too much space for an experienced candidate",
-        "Work experience bullets are too long and wordy",
-        "Missing a strong professional summary or objective"
+        "Inconsistent formatting between sections",
+        "Missing contact information or LinkedIn profile",
+        "Weak section headers that don't stand out",
+        "No clear hierarchy of information"
       ],
       honestFeedback: [
-        "Your resume reads like a job description rather than showcasing your unique contributions",
-        "Recruiters will skip over generic phrases like 'hard worker' - show, don't tell",
-        "The lack of quantifiable achievements makes it hard to assess your actual impact",
-        "Your resume doesn't stand out from hundreds of similar ones recruiters see daily"
+        "Brutal Honest Feedback: Areas that need immediate attention from a recruiter's perspective",
+        "Resume is a good starting point but needs more substance to stand out. Focus on quantifying your accomplishments and showcasing your skills through specific examples. The lack of a professional summary is a missed opportunity to immediately grab the recruiter's attention.",
+        "Current experience descriptions read like job duties rather than achievements - this won't help you stand out in a competitive market.",
+        "Skills section needs work - simply listing technologies without context doesn't demonstrate proficiency or impact."
       ]
     },
     impactRewrite: {
